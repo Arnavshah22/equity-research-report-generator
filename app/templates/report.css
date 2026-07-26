@@ -44,14 +44,21 @@ body {
   print-color-adjust: exact;
 }
 
+/* Margins measured off the reference: 12.2mm at the sides, and page 1 opens
+   19.2mm down (pages 2-4 clear the running head instead). */
 .page {
   position: relative;
   width: 210mm;
   height: 297mm;
-  padding: 11mm 12mm 14mm 12mm;
+  padding: 11mm 12.2mm 14mm 12.2mm;
   overflow: hidden;
   page-break-after: always;
   break-after: page;
+}
+.page:first-of-type {
+  /* Tuned so the first ink lands 19.2mm down, matching the reference; the
+     masthead's own leading accounts for the difference from this figure. */
+  padding-top: 17.1mm;
 }
 .page:last-of-type {
   page-break-after: auto;
@@ -406,11 +413,20 @@ table.fin.tight td {
   padding: 0.62mm 1.2mm;
   font-size: 6.5pt;
 }
-/* Last resort for a very long quarterly P&L on the fixed-height page 1. */
+/* Last resorts for a very long quarterly P&L on the fixed-height page 1.
+   Row counts and the resulting fit are verified in tests/check_page1.py. */
 table.fin.xtight th,
 table.fin.xtight td {
   padding: 0.32mm 1mm;
   font-size: 5.9pt;
+}
+table.fin.xxtight th,
+table.fin.xxtight td {
+  padding: 0.12mm 0.8mm;
+  font-size: 5.2pt;
+}
+table.fin.xxtight tr.head th {
+  padding: 0.8mm 0.8mm;
 }
 table.fin.quarterly td.num,
 table.fin.wide td.num,

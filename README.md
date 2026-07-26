@@ -63,6 +63,15 @@ python generate.py "Meridian Industrial" samples/meridian_financials.csv -o outp
 python generate.py "Acme" doc.pdf --html output/debug.html   # inspect the HTML before printing
 ```
 
+Extraction is the slow, rate-limited, billable half of the pipeline; typesetting
+is neither. Keep the extracted data and you can re-render it after any template
+change for free:
+
+```bash
+python generate.py "JSW Energy" doc.pdf --save-json output/jsw.json
+python generate.py "JSW Energy" doc.pdf --from-json output/jsw.json   # no LLM call
+```
+
 **Without any API key the app still runs**, in offline mode: the full report
 renders with correct layout and every financial field deliberately left blank.
 The UI shows a banner and the API returns `used_llm: false`, so stub output is
@@ -267,6 +276,15 @@ caught locally and for free:
 
 ```bash
 python -m tests.check_schema
+```
+
+`tests/check_page1.py` guards the layout's one silent failure mode. Page 1 is a
+fixed-height A4 sheet with `overflow: hidden`, so a long quarterly table doesn't
+wrap or spill — it loses its last rows and still looks plausible. This renders
+real PDFs at a range of row counts and measures where the ink stops:
+
+```bash
+python -m tests.check_page1
 ```
 
 ---

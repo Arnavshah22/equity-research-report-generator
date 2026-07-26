@@ -173,8 +173,10 @@
       {# Page 1 is a fixed-height A4 sheet with `overflow: hidden`, so a long
          P&L would silently lose its last rows off the bottom edge. Step the
          density down as the row count grows rather than clipping. #}
-      {{ table(report.quarterly, "quarterly" ~ (" tight" if report.quarterly.rows | length > 14 else "")
-                                            ~ (" xtight" if report.quarterly.rows | length > 18 else "")) }}
+      {% set qn = report.quarterly.rows | length %}
+      {{ table(report.quarterly, "quarterly" ~ (" tight" if qn > 14 else "")
+                                            ~ (" xtight" if qn > 18 else "")
+                                            ~ (" xxtight" if qn > 22 else "")) }}
       {% endif %}
     </main>
   </div>
@@ -228,7 +230,8 @@
     <div>{{ block("Profit & Loss", report.profit_loss, "tight") }}</div>
     <div>{{ block("Balance Sheet", report.balance_sheet, "tight") }}</div>
     <div>{{ block("Cashflow", report.cashflow, "tight") }}</div>
-    <div>{{ block("Ratios", report.ratios, "tight") }}</div>
+    {# Section labels are the reference's verbatim wording, "Ratio" included. #}
+    <div>{{ block("Ratio", report.ratios, "tight") }}</div>
   </div>
 
   <footer class="pagefoot"><span>{{ brand.website }}</span></footer>
@@ -238,7 +241,7 @@
 <section class="page">
   <header class="runhead"><div class="logo sm">{{ brand.name }}</div></header>
 
-  <h3 class="teal ruled">Recommendation Summary &ndash; <em>(last 3 years)</em></h3>
+  <h3 class="teal ruled">Recommendation Summary - <em>(last 3 years)</em></h3>
   <div class="reco">
     <div class="reco-chart">
       {% if charts.price_wide %}
@@ -270,8 +273,8 @@
   </table>
 
   <div class="defs">
-    <p><span class="u">Definitions:</span> {{ brand.rating_definitions }}</p>
-    <p class="symbols"><span class="u">Symbols:</span>
+    <p><span class="u">Definition:</span> {{ brand.rating_definitions }}</p>
+    <p class="symbols"><span class="u">Symbols definition:</span>
       <span class="sym"><span class="tri up">&#9650;</span>Upgrade</span>
       <span class="sym"><span class="tri flat">&#9679;</span>No Change</span>
       <span class="sym"><span class="tri down">&#9660;</span>Downgrade</span>
@@ -279,7 +282,7 @@
     <p>{{ brand.horizon_note }}</p>
   </div>
 
-  <h4 class="disc-head">DISCLAIMER</h4>
+  <h4 class="disc-head">DISCLAIMER &amp; DISCLOSURES</h4>
   <div class="disclaimer">
     {% for para in brand.disclaimer %}<p>{{ para }}</p>{% endfor %}
     {% if report.source_note %}<p class="prov">{{ report.source_note }}.</p>{% endif %}
