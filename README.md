@@ -169,6 +169,48 @@ section rows, bold/italic and missing cells.
 
 ---
 
+## A note on branding
+
+**The reports carry a placeholder brand, not the brand of the note this layout
+was modelled on.** That is deliberate, and it is the one place where this
+project departs from "recreate the sample".
+
+What was reproduced is the *structure*: page count and section order, the table
+and column layouts, the colour palette, the typography, the rating-criteria
+grid, the dash convention for undisclosed data. That is what makes a generated
+report recognisable as the same format, and it is what the acceptance criteria
+actually test.
+
+What was not reproduced is the *identity*: the logo and wordmark, the
+registered address, SEBI registration numbers, compliance-officer contact
+details, and the analyst certification. Those elements are what make a research
+note attributable to a firm. Copying them onto an automatically generated,
+unverified document about a real listed company would produce a counterfeit
+research note — one that looks like a named brokerage published a
+recommendation it never made. No amount of "this is only a demo" fixes that,
+because the file outlives the context it was generated in.
+
+So `app/branding.py` holds a neutral stand-in (`EQUIRESEARCH`), the disclaimer
+states plainly that the document is machine-generated, unverified and not
+investment advice, and no analyst is credited. Everything is overridable:
+
+```bash
+BRAND_NAME=...        # or edit app/branding.py directly
+BRAND_TAGLINE=...
+BRAND_WEBSITE=...
+```
+
+If you are deploying this for a real firm, put that firm's own marks and
+disclosures in — the point is that the identity should be supplied by whoever
+takes responsibility for the output, not copied from a third party by the
+template.
+
+The same reasoning is why `tests/fixture_report.py` uses a fictional issuer:
+a fully populated layout preview shouldn't double as a fake note on a real
+company.
+
+---
+
 ## Handling missing data
 
 Extraction never invents figures. The prompt requires a null for anything the
@@ -231,11 +273,8 @@ python -m tests.check_schema
 
 ## Notes and limitations
 
-- **Branding is a placeholder.** The layout is modelled on a published retail
-  research note, but the mark, website, disclosures and rating criteria in
-  `app/branding.py` are generic stand-ins, not any real firm's. Replace them
-  before distributing anything this produces. Generated reports are not
-  investment advice and carry no analyst certification.
+- **Branding is a placeholder** — see [A note on branding](#a-note-on-branding).
+  Replace `app/branding.py` before distributing anything this produces.
 - **Scanned PDFs are not supported** — extraction needs a text layer. The API
   returns a clear error rather than an empty report; OCR would be the fix.
 - Long filings are trimmed to ~120k characters (head + tail) before extraction;
