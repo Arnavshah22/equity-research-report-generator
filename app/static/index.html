@@ -3,628 +3,301 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Equity Research Report Generator</title>
+<title>Research Report Generator</title>
 <style>
-  /* The interface is a facsimile of the document it produces: same palette as
-     app/templates/report.css, same structural furniture, and the report's own
-     convention that an unknown value prints as a dash. */
   :root {
     --teal: #07867a;
     --teal-dark: #066b61;
-    --bar: #00bcb8;
-    --zebra: #f1f2f1;
-    --rule: #cfd4d3;
     --ink: #1a1a1a;
     --muted: #6b7280;
-    --down: #ed7d31;
-    --desk: #dfe3e2;
-
-    --sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-    --mono: "Cascadia Mono", ui-monospace, "SF Mono", Consolas, "Liberation Mono", monospace;
+    --rule: #dde2e1;
+    --bg: #f4f6f5;
+    --err: #c2410c;
   }
 
   * { box-sizing: border-box; }
 
-  html, body { margin: 0; }
-
   body {
-    background: var(--desk);
+    margin: 0;
+    padding: 48px 20px 80px;
+    background: var(--bg);
     color: var(--ink);
-    font: 400 14px/1.5 var(--sans);
-    padding: 28px 20px 56px;
-    display: flex;
-    justify-content: center;
+    font: 400 16px/1.55 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   }
 
-  /* ---------- the sheet ---------- */
+  .wrap { width: 100%; max-width: 520px; margin: 0 auto; }
 
-  .sheet {
-    position: relative;
-    width: 100%;
-    max-width: 860px;
-    background: #fff;
-    box-shadow: 0 1px 2px rgba(0,0,0,.10), 0 12px 32px rgba(0,0,0,.10);
-    padding: 30px 34px 62px;
-  }
-
-  .tab {
-    position: absolute;
-    top: 0; right: 0;
-    width: 26px; height: 210px;
-    background: var(--teal);
-    color: #fff;
-    font: 600 11px/1 var(--mono);
-    letter-spacing: .09em;
-    writing-mode: vertical-rl;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .pagefoot {
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: 30px;
-    background: var(--teal);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font: 500 12px/1 var(--mono);
-    letter-spacing: .04em;
-  }
-
-  /* ---------- masthead ---------- */
-
-  .masthead {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 24px;
-    padding-right: 30px;
-  }
-  .eyebrow {
-    color: var(--teal);
-    font-size: 17px;
+  h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
     font-weight: 700;
-    letter-spacing: -.01em;
+    letter-spacing: -.02em;
   }
-  .masthead h1 {
-    margin: 2px 0 0;
-    font-size: 38px;
-    font-weight: 800;
-    letter-spacing: -.032em;
-    line-height: 1.02;
-  }
-  .wordmark {
-    color: var(--teal);
-    font-size: 19px;
-    font-weight: 800;
-    letter-spacing: .055em;
-    text-align: right;
-  }
-  .wordmark-tag {
+  .lede {
+    margin: 0 0 32px;
     color: var(--muted);
-    font: 500 8.5px/1 var(--sans);
-    letter-spacing: .17em;
-    text-transform: uppercase;
-    text-align: right;
-    margin-top: 4px;
+    font-size: 16px;
   }
 
-  /* ---------- status badge: the rating slot, holding job state ---------- */
-
-  .statusrow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    margin-top: 14px;
-    padding: 0 30px 10px 0;
-    border-bottom: 1px solid var(--rule);
-  }
-  .sector { color: var(--muted); font-size: 13px; }
-  .sector strong { color: var(--ink); font-weight: 600; }
-
-  .badge {
-    flex: none;
-    min-width: 168px;
-    padding: 9px 18px;
+  .card {
     background: #fff;
     border: 1px solid var(--rule);
-    box-shadow: 3px 3px 0 rgba(0,0,0,.16);
-    text-align: center;
-    font: 700 17px/1.25 var(--mono);
-    letter-spacing: .07em;
-    color: var(--muted);
+    border-radius: 12px;
+    padding: 28px;
   }
-  .badge .el {
+
+  label {
     display: block;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: .1em;
-    color: var(--muted);
-    margin-top: 3px;
-  }
-  .badge[data-state="working"] { color: var(--teal); border-color: var(--bar); }
-  .badge[data-state="done"]    { color: var(--teal); border-color: var(--teal); }
-  .badge[data-state="failed"]  { color: var(--down); border-color: var(--down); }
-
-  /* ---------- identity strip ---------- */
-
-  .strip {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 12px;
-    table-layout: fixed;
-  }
-  /* The accepted-formats cell carries nine tokens; give it the room so it
-     stays on one line and the strip keeps a single row height. */
-  .strip .c-formats { width: 40%; }
-  .strip .c-limit   { width: 15%; }
-  .strip .c-backend { width: 27%; }
-  .strip .c-output  { width: 18%; }
-  .strip th, .strip td {
-    border: 1.5px solid #fff;
-    background: var(--zebra);
-    padding: 6px 8px;
-    text-align: center;
-  }
-  .strip th {
-    font: 600 10px/1.2 var(--sans);
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .strip td {
-    font: 500 12px/1.3 var(--mono);
-    background: #fff;
-    border-top: 0;
-    word-break: break-word;
-  }
-
-  .asof {
-    margin: 12px 0 16px;
-    padding-bottom: 5px;
-    border-bottom: 2px solid var(--ink);
-    font-size: 11px;
-    font-weight: 700;
-  }
-  .asof span { font-family: var(--mono); font-weight: 500; }
-
-  /* ---------- two columns ---------- */
-
-  .cols { display: flex; gap: 28px; align-items: flex-start; }
-  .rail { flex: 0 0 292px; }
-  .main { flex: 1 1 auto; min-width: 0; }
-
-  /* ---------- the rail: Company Data, but the values are inputs ---------- */
-
-  .blockhead {
-    background: var(--teal);
-    color: #fff;
-    font: 700 11px/1 var(--sans);
-    letter-spacing: .07em;
-    text-transform: uppercase;
-    padding: 7px 9px;
-  }
-  .kv { width: 100%; border-collapse: collapse; }
-  .kv tr { border-bottom: 1px solid #fff; }
-  .kv th {
-    width: 40%;
-    background: var(--zebra);
-    text-align: left;
-    font: 400 12px/1.35 var(--sans);
-    padding: 0 9px;
-    color: var(--ink);
-  }
-  .kv td {
-    background: var(--zebra);
-    padding: 0;
-    text-align: right;
-  }
-  .kv .out {
-    display: block;
-    padding: 7px 9px;
-    font: 500 12px/1.35 var(--mono);
-    color: var(--muted);
-  }
-  .kv .out.set { color: var(--ink); }
-
-  .kv input[type=text] {
-    width: 100%;
-    border: 0;
-    background: transparent;
-    padding: 7px 9px;
-    font: 500 12px/1.35 var(--mono);
-    color: var(--ink);
-    text-align: right;
-  }
-  .kv input[type=text]::placeholder { color: #a6adaa; }
-  .kv input[type=text]:focus,
-  .pick:focus-visible,
-  .go:focus-visible,
-  .dl:focus-visible {
-    outline: 2px solid var(--bar);
-    outline-offset: -2px;
-  }
-
-  .pick {
-    display: block;
-    width: 100%;
-    border: 0;
-    background: transparent;
-    padding: 7px 9px;
-    font: 500 12px/1.35 var(--mono);
-    color: var(--teal);
-    text-align: right;
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-  .pick.empty { color: var(--muted); text-decoration: none; }
-  .rail.over .pick { color: var(--bar); }
-  .rail.over .kv th, .rail.over .kv td { background: #e7f4f3; }
-  .kv input[type=file] { display: none; }
-
-  .railnote {
-    margin: 7px 0 0;
-    font-size: 10.5px;
-    line-height: 1.45;
-    color: var(--muted);
-  }
-
-  /* ---------- main column ---------- */
-
-  .headline {
-    color: var(--teal);
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -.022em;
-    line-height: 1.2;
-    margin: 0 0 10px;
-  }
-  .blurb {
-    margin: 0 0 12px;
+    margin-bottom: 8px;
+    font-size: 15px;
     font-weight: 600;
-    text-align: justify;
-  }
-  .steps { margin: 0 0 18px; padding: 0; list-style: none; }
-  .steps li {
-    display: flex;
-    gap: 9px;
-    padding: 5px 0;
-    border-bottom: 1px solid var(--zebra);
-    font-size: 13px;
-  }
-  .steps b {
-    flex: none;
-    width: 74px;
-    font: 600 10px/1.7 var(--mono);
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    color: var(--teal);
   }
 
-  .go {
+  input[type=text] {
     width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    font: inherit;
+    color: var(--ink);
+    background: #fff;
+  }
+  input[type=text]::placeholder { color: #9ca3a1; }
+
+  .field { margin-bottom: 24px; }
+
+  /* file picker */
+  .drop {
+    display: block;
+    width: 100%;
+    padding: 28px 20px;
+    border: 2px dashed var(--rule);
+    border-radius: 10px;
+    background: #fcfdfd;
+    text-align: center;
+    cursor: pointer;
+    font: inherit;
+    color: var(--ink);
+  }
+  .drop:hover, .drop.over { border-color: var(--teal); background: #f2faf9; }
+  .drop input { display: none; }
+  .drop .big { display: block; font-weight: 600; margin-bottom: 4px; }
+  .drop .small { display: block; color: var(--muted); font-size: 14px; }
+  .drop .file { color: var(--teal); word-break: break-all; }
+
+  button.go {
+    width: 100%;
+    margin-top: 4px;
+    padding: 14px;
     border: 0;
+    border-radius: 8px;
     background: var(--teal);
     color: #fff;
-    padding: 13px;
-    font: 700 14px/1 var(--sans);
-    letter-spacing: .03em;
+    font: 600 16px/1 inherit;
     cursor: pointer;
   }
-  .go:hover:not(:disabled) { background: var(--teal-dark); }
-  .go:disabled { background: #a9bfbc; cursor: progress; }
+  button.go:hover:not(:disabled) { background: var(--teal-dark); }
+  button.go:disabled { background: #a9c1be; cursor: default; }
 
-  .msg {
-    display: none;
-    margin-top: 14px;
-    padding: 12px 14px;
-    background: var(--zebra);
-    border-left: 3px solid var(--rule);
-    font-size: 13px;
+  /* focus, visible for keyboard users */
+  input[type=text]:focus-visible,
+  .drop:focus-visible,
+  button.go:focus-visible,
+  .download:focus-visible {
+    outline: 3px solid #7fd3cc;
+    outline-offset: 2px;
   }
-  .msg.show { display: block; }
-  .msg[data-kind="working"] { border-left-color: var(--bar); }
-  .msg[data-kind="done"]    { border-left-color: var(--teal); }
-  .msg[data-kind="failed"]  { border-left-color: var(--down); }
-  .msg h3 { margin: 0 0 4px; font-size: 13px; font-weight: 700; }
-  .msg p  { margin: 0; color: var(--muted); font-size: 12.5px; }
 
-  .dl {
+  /* result */
+  .result {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    background: #fff;
+    text-align: center;
+  }
+  .result.show { display: block; }
+  .result h2 { margin: 0 0 6px; font-size: 17px; font-weight: 700; }
+  .result p  { margin: 0; color: var(--muted); font-size: 14.5px; }
+  .result.error h2 { color: var(--err); }
+
+  .download {
     display: inline-block;
-    margin-top: 11px;
-    padding: 10px 20px;
+    margin-top: 16px;
+    padding: 12px 26px;
     background: var(--teal);
     color: #fff;
+    border-radius: 8px;
     text-decoration: none;
-    font: 700 13px/1 var(--sans);
-    letter-spacing: .03em;
+    font-weight: 600;
   }
-  .dl:hover { background: var(--teal-dark); }
+  .download:hover { background: var(--teal-dark); }
+
+  .spinner {
+    width: 18px; height: 18px;
+    margin: 0 auto 10px;
+    border: 2px solid #d7e7e5;
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   .notice {
     display: none;
-    margin: 0 0 14px;
-    padding: 10px 13px;
-    background: #fdf4ec;
-    border-left: 3px solid var(--down);
-    font-size: 12.5px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid #f0dfae;
+    border-radius: 8px;
+    background: #fffaee;
+    font-size: 14.5px;
     line-height: 1.5;
   }
   .notice.show { display: block; }
 
-  /* On completion the rail fills the way a note gets typeset: row by row. */
-  @keyframes ink { from { opacity: 0; transform: translateY(-2px); } }
-  .kv .out.filling { animation: ink .32s ease-out both; }
-
   @media (prefers-reduced-motion: reduce) {
-    .kv .out.filling { animation: none; }
-    .go, .dl { transition: none; }
+    .spinner { animation: none; border-top-color: #d7e7e5; }
   }
 
-  @media (max-width: 760px) {
-    body { padding: 0; }
-    .sheet { padding: 24px 20px 56px; box-shadow: none; }
-    .tab { display: none; }
-    /* The masthead is a two-up row on paper; at phone width the wordmark has
-       nowhere to go, so stack it as a letterhead above the title. */
-    .masthead {
-      padding-right: 0;
-      flex-direction: column-reverse;
-      align-items: flex-start;
-      gap: 12px;
-    }
-    .masthead h1 { font-size: 30px; }
-    .wordmark, .wordmark-tag { text-align: left; }
-    .wordmark { font-size: 17px; }
-    .statusrow { flex-direction: column; align-items: stretch; padding-right: 0; }
-    .badge { min-width: 0; }
-    .cols { flex-direction: column; gap: 22px; }
-    .rail { flex: 1 1 auto; width: 100%; }
-    .strip th { font-size: 9px; }
-    .strip td { font-size: 11px; }
+  @media (max-width: 560px) {
+    body { padding: 28px 16px 60px; }
+    .card { padding: 22px 18px; }
+    h1 { font-size: 24px; }
   }
 </style>
 </head>
 <body>
 
-<div class="sheet">
-  <div class="tab">RESULT UPDATE</div>
+<div class="wrap">
 
-  <header class="masthead">
-    <div>
-      <div class="eyebrow">Retail Equity Research</div>
-      <h1>Report Generator</h1>
-    </div>
-    <div>
-      <div class="wordmark">EQUIRESEARCH</div>
-      <div class="wordmark-tag">Independent Equity Insight</div>
-    </div>
-  </header>
-
-  <div class="statusrow">
-    <div class="sector">Coverage: <strong>any company, from its own filing</strong></div>
-    <div class="badge" id="badge" data-state="ready" role="status" aria-live="polite">
-      READY<span class="el" id="elapsed">awaiting input</span>
-    </div>
-  </div>
-
-  <table class="strip">
-    <tr>
-      <th scope="col" class="c-formats">Accepts</th>
-      <th scope="col" class="c-limit">Size limit</th>
-      <th scope="col" class="c-backend">Extraction</th>
-      <th scope="col" class="c-output">Output</th>
-    </tr>
-    <tr>
-      <td id="m-formats">&ndash;</td>
-      <td>25 MB</td>
-      <td id="m-backend">&ndash;</td>
-      <td>4-page PDF</td>
-    </tr>
-  </table>
-
-  <div class="asof">Data as of: <span id="today">&ndash;</span></div>
+  <h1>Research Report Generator</h1>
+  <p class="lede">Upload a company's financial document and get back a four-page
+    PDF research note.</p>
 
   <p class="notice" id="notice"></p>
 
-  <form id="form">
-    <div class="cols">
-      <aside class="rail" id="rail">
-        <div class="blockhead">Report Inputs</div>
-        <table class="kv">
-          <tr>
-            <th><label for="company">Company</label></th>
-            <td><input type="text" id="company" name="company_name"
-                       placeholder="name it" autocomplete="organization" required></td>
-          </tr>
-          <tr>
-            <th><label for="file">Document</label></th>
-            <td>
-              <input type="file" id="file" name="file" required>
-              <button type="button" class="pick empty" id="pick">choose or drop</button>
-            </td>
-          </tr>
-          <tr><th>Format</th><td><span class="out" id="r-format">&ndash;</span></td></tr>
-          <tr><th>Size</th><td><span class="out" id="r-size">&ndash;</span></td></tr>
-          <tr><th>Text read</th><td><span class="out" id="r-chars">&ndash;</span></td></tr>
-          <tr><th>Rating</th><td><span class="out" id="r-rating">&ndash;</span></td></tr>
-        </table>
-        <p class="railnote">A dash means the field has no value yet &mdash; the same
-          convention the generated report uses for figures its source never stated.</p>
-      </aside>
+  <form class="card" id="form">
 
-      <main class="main">
-        <h2 class="headline">A quarterly filing goes in. A research note comes out.</h2>
-        <p class="blurb">Drop in a results PDF, an exported spreadsheet or a plain
-          text update. What comes back is a four-page note in a fixed house
-          format &mdash; financial tables, narrative sections and charts, laid
-          out for print.</p>
-
-        <ul class="steps">
-          <li><b>Read</b><span>Text and ruled tables are pulled from the document, so figures keep the rows they belong to.</span></li>
-          <li><b>Extract</b><span>A model fills the report schema. Anything the source doesn't state is left null, never guessed.</span></li>
-          <li><b>Typeset</b><span>Charts are drawn, the template is filled, and headless Chromium prints it to A4.</span></li>
-        </ul>
-
-        <button type="submit" class="go" id="go">Generate report</button>
-
-        <div class="msg" id="msg" data-kind="working"></div>
-      </main>
+    <div class="field">
+      <label for="company">Company name</label>
+      <input type="text" id="company" name="company_name"
+             placeholder="e.g. ICICI Bank" autocomplete="organization" required>
     </div>
+
+    <div class="field">
+      <label for="file">Financial document</label>
+      <label class="drop" id="drop" for="file" tabindex="0">
+        <input type="file" id="file" name="file" required>
+        <span class="big" id="dropTitle">Choose a file, or drag one here</span>
+        <span class="small" id="dropHint">PDF, CSV, Excel or text &mdash; up to 25 MB</span>
+      </label>
+    </div>
+
+    <button type="submit" class="go" id="go">Generate report</button>
   </form>
 
-  <footer class="pagefoot">www.example-research.com</footer>
+  <div class="result" id="result"></div>
+
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
-const form = $('form'), fileInput = $('file'), rail = $('rail'), pick = $('pick');
-const badge = $('badge'), elapsed = $('elapsed'), msg = $('msg'), go = $('go');
+const form = $('form'), fileInput = $('file'), drop = $('drop');
+const dropTitle = $('dropTitle'), dropHint = $('dropHint');
+const go = $('go'), result = $('result');
 
-const DASH = '–';
-let timer = null;
-
-$('today').textContent = new Date().toLocaleDateString('en-GB', {
-  day: '2-digit', month: 'short', year: 'numeric'
-});
-
-/* ---- state lives in the rating badge ---- */
-
-function setState(state, label, sub) {
-  badge.dataset.state = state;
-  badge.firstChild.textContent = label;
-  elapsed.textContent = sub;
-}
-
-function setMessage(kind, title, body, extra) {
-  msg.dataset.kind = kind;
-  msg.innerHTML = '<h3></h3><p></p>';
-  msg.querySelector('h3').textContent = title;
-  msg.querySelector('p').textContent = body;
-  if (extra) msg.appendChild(extra);
-  msg.classList.add('show');
-}
-
-/* Fields fill in one at a time, the way a note gets typeset. */
-function fill(id, value, order) {
-  const el = $(id);
-  const has = value !== null && value !== undefined && value !== '';
-  el.textContent = has ? value : DASH;
-  el.classList.toggle('set', has);
-  if (has) {
-    el.classList.remove('filling');
-    void el.offsetWidth;
-    el.style.animationDelay = (order || 0) * 90 + 'ms';
-    el.classList.add('filling');
-  }
-}
-
-function reset(...ids) {
-  ids.forEach(id => { $(id).textContent = DASH; $(id).classList.remove('set', 'filling'); });
-}
-
-/* ---- environment ---- */
-
+/* Tell people up front if reports will come back empty. */
 fetch('/api/health').then(r => r.json()).then(h => {
-  $('m-formats').textContent =
-    h.supported_formats.map(f => f.replace('.', '').toUpperCase()).join('  ');
-  $('m-backend').textContent = h.llm_configured ? h.llm_backend : 'offline';
   if (!h.llm_configured) {
     const n = $('notice');
-    n.textContent = 'No LLM API key is set. Reports will still render with the full '
-      + 'layout, but every financial field will be blank. Add GEMINI_API_KEY to .env '
-      + 'and restart to extract for real.';
+    n.textContent = 'No API key is set, so reports will be generated with the '
+      + 'correct layout but no financial figures. Add GEMINI_API_KEY to your '
+      + '.env file and restart to extract for real.';
     n.classList.add('show');
   }
-}).catch(() => { $('m-backend').textContent = 'unreachable'; });
+}).catch(() => {});
 
-/* ---- file selection ---- */
-
-function bytes(n) {
-  if (n < 1024) return n + ' B';
-  if (n < 1048576) return (n / 1024).toFixed(0) + ' KB';
-  return (n / 1048576).toFixed(1) + ' MB';
+/* file selection */
+function sizeOf(bytes) {
+  if (bytes < 1024) return bytes + ' bytes';
+  if (bytes < 1048576) return Math.round(bytes / 1024) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
 }
 
 function showFile() {
   const f = fileInput.files[0];
   if (!f) {
-    pick.textContent = 'choose or drop';
-    pick.classList.add('empty');
-    reset('r-format', 'r-size');
+    dropTitle.textContent = 'Choose a file, or drag one here';
+    dropTitle.classList.remove('file');
+    dropHint.innerHTML = 'PDF, CSV, Excel or text &mdash; up to 25 MB';
     return;
   }
-  pick.textContent = f.name;
-  pick.classList.remove('empty');
-  fill('r-format', (f.name.split('.').pop() || '?').toUpperCase(), 0);
-  fill('r-size', bytes(f.size), 1);
+  dropTitle.textContent = f.name;
+  dropTitle.classList.add('file');
+  dropHint.textContent = sizeOf(f.size) + ' — click to choose a different file';
 }
 
-pick.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', showFile);
 
+/* the drop zone is a <label>, so give it keyboard behaviour too */
+drop.addEventListener('keydown', ev => {
+  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); fileInput.click(); }
+});
+
 ['dragenter', 'dragover'].forEach(e =>
-  rail.addEventListener(e, ev => { ev.preventDefault(); rail.classList.add('over'); }));
+  drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach(e =>
-  rail.addEventListener(e, ev => { ev.preventDefault(); rail.classList.remove('over'); }));
-rail.addEventListener('drop', ev => {
+  drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => {
   if (ev.dataTransfer.files.length) { fileInput.files = ev.dataTransfer.files; showFile(); }
 });
 
-/* ---- generate ---- */
+/* result panel */
+function show(kind, title, body, link) {
+  result.className = 'result show' + (kind === 'error' ? ' error' : '');
+  result.innerHTML = '';
+  if (kind === 'working') result.appendChild(Object.assign(
+    document.createElement('div'), { className: 'spinner' }));
+
+  const h = document.createElement('h2'); h.textContent = title;
+  const p = document.createElement('p');  p.textContent = body;
+  result.append(h, p);
+
+  if (link) {
+    const a = document.createElement('a');
+    a.className = 'download';
+    a.href = link;
+    a.download = '';
+    a.textContent = 'Download PDF';
+    result.appendChild(a);
+    a.focus();
+  }
+}
 
 form.addEventListener('submit', async ev => {
   ev.preventDefault();
   go.disabled = true;
-  reset('r-chars', 'r-rating');
-
-  // The server reports no intermediate progress, so the only honest live
-  // signal is how long it has actually been running.
-  const t0 = Date.now();
-  setState('working', 'WORKING', '0s elapsed');
-  timer = setInterval(() => {
-    elapsed.textContent = Math.round((Date.now() - t0) / 1000) + 's elapsed';
-  }, 1000);
-
-  setMessage('working', 'Reading the document',
-    'Extraction and typesetting run in one pass. A long filing can take a minute or two.');
+  go.textContent = 'Generating…';
+  show('working', 'Generating your report', 'This usually takes about a minute.');
 
   try {
     const res = await fetch('/api/generate', { method: 'POST', body: new FormData(form) });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.detail || 'Generation failed.');
+    if (!res.ok) throw new Error(body.detail || 'The report could not be generated.');
 
-    clearInterval(timer);
-    const secs = Math.round((Date.now() - t0) / 1000);
-    setState('done', 'COMPLETE', secs + 's');
-
-    fill('r-chars', body.chars_extracted.toLocaleString() + ' chars', 0);
-    fill('r-rating', body.rating, 1);
-
-    const link = document.createElement('a');
-    link.className = 'dl';
-    link.href = body.download_url;
-    link.download = '';
-    link.textContent = 'Download PDF';
-
-    setMessage('done',
-      (body.company_name || 'Report') + ' — 4 pages',
+    show('done',
+      'Your report is ready',
       body.used_llm
-        ? 'Figures were extracted from your document. Fields the source never stated are printed as dashes.'
-        : 'Offline mode: the layout rendered, but no figures were extracted.',
-      link);
-    link.focus();
+        ? (body.company_name || 'Report') + ' — 4 pages'
+        : 'Layout only: no API key is set, so the financial fields are blank.',
+      body.download_url);
   } catch (err) {
-    clearInterval(timer);
-    setState('failed', 'FAILED', 'not generated');
-    setMessage('failed', 'The report was not generated.', err.message);
+    show('error', 'That didn\'t work', err.message);
   } finally {
     go.disabled = false;
+    go.textContent = 'Generate report';
   }
 });
 </script>
