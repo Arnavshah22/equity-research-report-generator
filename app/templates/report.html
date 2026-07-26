@@ -169,7 +169,7 @@
       <p class="para">{{ m(report.narrative.outlook_valuation) }}</p>
 
       {% if report.quarterly and report.quarterly.rows %}
-      <h3 class="teal">Quarterly Financials</h3>
+      <h3 class="teal">Quarterly Financials Consolidated</h3>
       {# Page 1 is a fixed-height A4 sheet with `overflow: hidden`, so a long
          P&L would silently lose its last rows off the bottom edge. Step the
          density down as the row count grows rather than clipping. #}
@@ -210,7 +210,8 @@
 
   {% if report.change_in_estimates and report.change_in_estimates.rows %}
   <h3 class="teal">Change in Estimates</h3>
-  {{ table(report.change_in_estimates, "wide") }}
+  {# Group header stays teal; the year row under it is plain, as in the reference. #}
+  {{ table(report.change_in_estimates, "wide plainhead") }}
   {% endif %}
 
   <footer class="pagefoot"><span>{{ brand.website }}</span></footer>
@@ -237,17 +238,17 @@
 <section class="page">
   <header class="runhead"><div class="logo sm">{{ brand.name }}</div></header>
 
-  <h3 class="teal">Recommendation Summary</h3>
+  <h3 class="teal ruled">Recommendation Summary &ndash; <em>(last 3 years)</em></h3>
   <div class="reco">
     <div class="reco-chart">
-      {% if charts.price %}
-      <img class="chart" src="{{ charts.price }}" alt="Price history">
+      {% if charts.price_wide %}
+      <img class="chart reco-img" src="{{ charts.price_wide }}" alt="Price history">
       {% else %}
       <p class="para missing-block">No price history available.</p>
       {% endif %}
     </div>
     <div class="reco-table">
-      <table class="fin">
+      <table class="fin plainhead">
         <tr class="head"><th class="corner">Dates</th><th>Rating</th><th>Target</th></tr>
         {% if report.rating_history %}
           {% for r in report.rating_history %}
@@ -260,8 +261,8 @@
     </div>
   </div>
 
-  <h3 class="teal">Investment Rating Criteria</h3>
-  <table class="fin criteria">
+  <h3 class="teal ruled">Investment Rating Criteria</h3>
+  <table class="fin criteria plainhead">
     <tr class="head"><th class="corner">Ratings</th><th>Large caps</th><th>Midcaps</th><th>Small Caps</th></tr>
     {% for row in brand.rating_criteria %}
     <tr><td class="label b">{{ row[0] }}</td><td class="num">{{ row[1] }}</td><td class="num">{{ row[2] }}</td><td class="num">{{ row[3] }}</td></tr>
@@ -270,10 +271,10 @@
 
   <div class="defs">
     <p><span class="u">Definitions:</span> {{ brand.rating_definitions }}</p>
-    <p><span class="u">Symbols:</span>
-      <span class="tri up">&#9650;</span> Upgrade
-      <span class="tri flat">&#9679;</span> No Change
-      <span class="tri down">&#9660;</span> Downgrade
+    <p class="symbols"><span class="u">Symbols:</span>
+      <span class="sym"><span class="tri up">&#9650;</span>Upgrade</span>
+      <span class="sym"><span class="tri flat">&#9679;</span>No Change</span>
+      <span class="sym"><span class="tri down">&#9660;</span>Downgrade</span>
     </p>
     <p>{{ brand.horizon_note }}</p>
   </div>

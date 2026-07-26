@@ -185,6 +185,36 @@ def _missing(package: str, provider: str) -> ExtractionError:
     )
 
 
+def _friendly(exc: Exception, backend: Backend) -> str:
+    """
+    Turn a provider SDK error into something a user can act on.
+
+    Vendor errors arrive as a wall of JSON with quota metric names and help
+    URLs in it. The two failures people actually hit -- out of quota and bad
+    key -- deserve a sentence that says what to do next.
+    """
+    text = str(exc)
+
+    if "RESOURCE_EXHAUSTED" in text or "429" in text:
+        return (
+            f"{backend.label} rate limit reached. Free tiers cap how many "
+            "reports you can generate per minute and per day. Wait a minute "
+            "and try again, or set LLM_MODEL to a different model (or another "
+            "provider's key) in .env."
+        )
+    if "API key not valid" in text or "API_KEY_INVALID" in text or "401" in text:
+        return (
+            f"{backend.label} rejected the API key. Check the key in your .env "
+            "file, and that it is enabled for the model you asked for."
+        )
+    if "404" in text and backend.model in text:
+        return (
+            f"{backend.label} has no model called {backend.model!r}. "
+            "Set LLM_MODEL in .env to a model your key can reach."
+        )
+    return f"{backend.label} API error: {text}"
+
+
 # --------------------------------------------------------------------------
 # gemini
 # --------------------------------------------------------------------------
@@ -244,7 +274,7 @@ def _call_gemini(backend: Backend, system: str, user: str) -> ReportModel:
             model=backend.model, contents=user, config=config
         )
     except Exception as exc:  # SDK raises several unrelated error types
-        raise ExtractionError(f"Gemini API error: {exc}") from exc
+        raise ExtractionError(_friendly(exc, backend)) from exc
 
     text = (getattr(response, "text", None) or "").strip()
     if text:
@@ -294,7 +324,7 @@ def _call_anthropic(backend: Backend, system: str, user: str) -> ReportModel:
             output_format=ReportModel,
         )
     except anthropic.APIError as exc:
-        raise ExtractionError(f"Claude API error: {exc}") from exc
+        raise ExtractionError(_friendly(exc, backend)) from exc
 
     if response.stop_reason == "refusal":
         raise ExtractionError("The model declined to process this document.")
@@ -345,7 +375,7 @@ def _call_openai(backend: Backend, system: str, user: str) -> ReportModel:
             max_tokens=int(os.getenv("LLM_MAX_TOKENS", str(MAX_TOKENS))),
         )
     except Exception as exc:
-        raise ExtractionError(f"{backend.label} API error: {exc}") from exc
+        raise ExtractionError(_friendly(exc, backend)) from exc
 
     if not completion.choices:
         raise ExtractionError(f"{backend.label} returned no choices.")

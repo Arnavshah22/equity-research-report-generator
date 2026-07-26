@@ -8,16 +8,21 @@
   margin: 0;
 }
 
+/* Palette sampled pixel-for-pixel from the reference note: the teal is
+   #07877B, table banding alternates #FFFFFF with #F2F2F2, and the highlights
+   block sits on a fractionally lighter #F3F3F3. */
 :root {
-  --teal: #07867a;
+  --teal: #07877b;
   --teal-dark: #066b61;
   --bar: #00bcb8;
-  --zebra: #f1f2f1;
+  --zebra: #f2f2f2;
+  --band: #f3f3f3;
   --rule: #cfd4d3;
   --ink: #1a1a1a;
   --muted: #6b7280;
   --up: #00a651;
   --down: #ed7d31;
+  --flat: #f5c518;
 }
 
 * {
@@ -60,7 +65,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 9mm;
+  height: 10.6mm;
   background: var(--teal);
   color: #fff;
   display: flex;
@@ -74,8 +79,8 @@ body {
   position: absolute;
   top: 0;
   right: 0;
-  width: 8mm;
-  height: 78mm;
+  width: 8.6mm;
+  height: 62mm;
   background: var(--teal);
   color: #fff;
   font-size: 7.5pt;
@@ -125,7 +130,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 14mm;
+  height: 17.5mm;
   background: var(--teal);
   display: flex;
   align-items: center;
@@ -136,7 +141,7 @@ body {
   color: #fff;
 }
 .page:not(:first-of-type) {
-  padding-top: 20mm;
+  padding-top: 23mm;
 }
 
 /* ---------- page 1 header ---------- */
@@ -161,7 +166,7 @@ body {
   padding: 1.6mm 4mm;
   border: 0.6pt solid var(--rule);
   box-shadow: 1.2pt 1.2pt 0 rgba(0, 0, 0, 0.18);
-  background: #fff;
+  background: var(--zebra);
 }
 .rating-badge.muted {
   color: var(--muted);
@@ -206,14 +211,27 @@ table.strip .strip-title {
   font-weight: 700;
   width: 22mm;
 }
+/* Key Changes cells: bold label with a large arrow beside it. In the
+   reference these triangles are the size of the row, not inline glyphs. */
 table.strip .ch {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 7.6pt;
+  white-space: nowrap;
 }
+table.strip .ch .tri {
+  font-size: 13pt;
+  line-height: 0;
+  vertical-align: -1.5pt;
+  margin-left: 2mm;
+}
+/* The identity block runs white header over a grey value row -- the reverse
+   of the Key Changes row above it. */
 table.strip .ids-head th {
   font-weight: 600;
+  background: #fff;
 }
 table.strip .ids td {
-  background: #fff;
+  background: var(--zebra);
 }
 
 table.pricebox th,
@@ -231,8 +249,10 @@ table.pricebox th {
 table.pricebox td {
   text-align: right;
 }
+/* The reference prints the expected return in the same ink as Target and CMP;
+   colouring it would imply a signal the original doesn't carry. */
 table.pricebox .ret td {
-  color: var(--teal);
+  color: var(--ink);
 }
 
 .asof {
@@ -273,13 +293,19 @@ table.pricebox .ret td {
   text-align: justify;
   margin: 0 0 2.5mm;
 }
+/* Result bullets sit on a tinted block in the reference, the same treatment as
+   the Key highlights block on page 2. */
 ul.bullets {
   margin: 0 0 2.5mm;
-  padding-left: 4mm;
+  padding: 2mm 2mm 2mm 6mm;
+  background: var(--band);
 }
 ul.bullets li {
   margin-bottom: 1.1mm;
   text-align: justify;
+}
+ul.bullets li:last-child {
+  margin-bottom: 0;
 }
 
 h3.teal {
@@ -290,6 +316,15 @@ h3.teal {
 }
 h3.teal.big {
   font-size: 12.5pt;
+}
+/* Page 4's section headings carry a rule across the column in the reference. */
+h3.teal.ruled {
+  border-bottom: 0.8pt solid var(--rule);
+  padding-bottom: 1mm;
+}
+h3.teal.ruled em {
+  font-style: normal;
+  font-weight: 400;
 }
 h4 {
   font-size: 8.5pt;
@@ -308,7 +343,22 @@ table.fin {
 table.fin th,
 table.fin td {
   padding: 0.85mm 1.4mm;
-  border: 0.3pt solid #fff;
+  /* Columns are separated by hairline white gaps; rows are NOT -- in the
+     reference the alternating band IS the row separator, so a horizontal
+     border would read as an extra rule the original doesn't have. */
+  border-left: 0.4pt solid #fff;
+  border-right: 0.4pt solid #fff;
+}
+/* The white gaps separate columns; on the outer edges they have nothing to
+   separate, and a fractional border there rounds short and lets a hairline of
+   the header band show past the table edge. */
+table.fin th:first-child,
+table.fin td:first-child {
+  border-left: 0;
+}
+table.fin th:last-child,
+table.fin td:last-child {
+  border-right: 0;
 }
 table.fin tr.head th,
 table.fin tr.group th {
@@ -316,6 +366,7 @@ table.fin tr.group th {
   color: #fff;
   font-weight: 700;
   text-align: center;
+  padding: 1.5mm 1.4mm;
 }
 table.fin tr.group th {
   background: var(--teal-dark);
@@ -325,18 +376,19 @@ table.fin tr.head th.corner {
 }
 table.fin td.label {
   text-align: left;
-  background: var(--zebra);
+  background: #fff;
 }
 table.fin td.label.indent {
   padding-left: 3.5mm;
 }
 table.fin td.num {
   text-align: right;
-  background: var(--zebra);
+  background: #fff;
   white-space: nowrap;
 }
+/* True zebra: white / #F2F2F2, matching the reference exactly. */
 table.fin tr:nth-child(even) td {
-  background: #fafbfa;
+  background: var(--zebra);
 }
 table.fin tr.b td,
 table.fin td.b {
@@ -361,7 +413,8 @@ table.fin.xtight td {
   font-size: 5.9pt;
 }
 table.fin.quarterly td.num,
-table.fin.wide td.num {
+table.fin.wide td.num,
+table.fin.plainhead td.num {
   text-align: center;
 }
 table.kv td.label {
@@ -415,12 +468,13 @@ table.kv td.label {
   margin: 0;
 }
 .chartgrid figcaption {
-  font-size: 10pt;
+  color: var(--teal);
+  font-size: 12.5pt;
   font-weight: 700;
-  margin-bottom: 1mm;
+  margin-bottom: 1.5mm;
 }
 .highlights {
-  background: var(--zebra);
+  background: var(--band);
   padding: 2mm 2mm 0.5mm;
   margin-bottom: 2.5mm;
 }
@@ -449,6 +503,20 @@ table.kv td.label {
 table.criteria td.num {
   text-align: center;
 }
+/* Page 4's reference tables use a plain header -- grey ground, dark type --
+   rather than the teal band the financial tables carry. */
+table.fin.plainhead tr.head th {
+  background: var(--zebra);
+  color: var(--ink);
+  padding: 1.1mm 1.4mm;
+}
+/* Keep the price chart at the reference's proportions instead of letting a
+   small figure stretch to the column width. */
+.reco-img {
+  width: 100%;
+  max-height: 32mm;
+  object-fit: contain;
+}
 .tri {
   font-size: 7pt;
   vertical-align: middle;
@@ -460,7 +528,18 @@ table.criteria td.num {
   color: var(--down);
 }
 .tri.flat {
-  color: #f5b301;
+  color: var(--flat);
+}
+/* The symbols key is set large and widely spaced in the reference. */
+.symbols .sym {
+  display: inline-block;
+  margin-left: 7mm;
+}
+.symbols .sym .tri {
+  font-size: 13pt;
+  line-height: 0;
+  vertical-align: -1.5pt;
+  margin-right: 1.6mm;
 }
 .defs {
   font-size: 6.2pt;

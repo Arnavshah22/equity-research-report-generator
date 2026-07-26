@@ -185,8 +185,15 @@ def combo_chart(series: ChartSeries) -> str | None:
     return _to_uri(fig)
 
 
-def price_chart(history: PriceHistory) -> str | None:
-    """The stock-vs-rebased-index chart in the page 1 left rail."""
+def price_chart(history: PriceHistory, *, wide: bool = False) -> str | None:
+    """
+    The stock-vs-rebased-index chart.
+
+    Two aspect ratios, because the same series appears in two very different
+    slots: a 64mm column on page 1, and a ~120mm half-width panel beside the
+    recommendation table on page 4. Rendering one figure and letting CSS scale
+    it would either squash the rail or balloon the page 4 panel.
+    """
     n = len(history.labels)
     if n == 0:
         return None
@@ -196,7 +203,7 @@ def price_chart(history: PriceHistory) -> str | None:
     if all(v is None for v in stock):
         return None
 
-    fig, ax = plt.subplots(figsize=(2.9, 1.15))
+    fig, ax = plt.subplots(figsize=(6.6, 1.5) if wide else (2.9, 1.15))
     x = range(n)
 
     def _plot(values, color, label):

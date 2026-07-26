@@ -36,8 +36,12 @@ def build_charts(report: ReportModel) -> dict:
         if uri:
             combos.append({"title": series.title, "uri": uri})
 
-    price = price_chart(report.price_history) if report.price_history else None
-    return {"combos": combos, "price": price}
+    history = report.price_history
+    return {
+        "combos": combos,
+        "price": price_chart(history) if history else None,
+        "price_wide": price_chart(history, wide=True) if history else None,
+    }
 
 
 def render_html(report: ReportModel) -> str:
