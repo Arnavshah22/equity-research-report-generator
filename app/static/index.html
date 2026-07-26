@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equity Research Report Generator</title>
+<style>
+  :root {
+    --teal: #07867a;
+    --ink: #14201f;
+    --muted: #6b7280;
+    --rule: #dfe4e3;
+    --bg: #f6f8f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 15px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+    padding: 48px 20px;
+  }
+  main { width: 100%; max-width: 620px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h1 span { color: var(--teal); }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  form {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 26px;
+  }
+  label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+  input[type=text] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    font: inherit;
+    margin-bottom: 20px;
+  }
+  input[type=text]:focus, .drop:focus-within {
+    outline: 2px solid var(--teal);
+    outline-offset: 1px;
+  }
+  .drop {
+    border: 1.5px dashed var(--rule);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    margin-bottom: 8px;
+  }
+  .drop:hover, .drop.over { border-color: var(--teal); background: #f2faf9; }
+  .drop input { display: none; }
+  .drop .name { font-weight: 600; color: var(--teal); word-break: break-all; }
+  .hint { color: var(--muted); font-size: 13px; margin: 0 0 20px; }
+  button {
+    width: 100%;
+    padding: 12px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--teal);
+    color: #fff;
+    font: 600 15px/1 inherit;
+    cursor: pointer;
+  }
+  button:disabled { background: #9db8b5; cursor: not-allowed; }
+  .status {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.work { background: #eef6f5; border: 1px solid #cde5e2; }
+  .status.ok   { background: #edf8f1; border: 1px solid #c6e8d4; }
+  .status.err  { background: #fdf0ee; border: 1px solid #f3ccc4; }
+  .status a {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 9px 16px;
+    background: var(--teal);
+    color: #fff;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .spin {
+    width: 14px; height: 14px;
+    border: 2px solid #cde5e2;
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: -2px;
+    margin-right: 8px;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .banner {
+    background: #fff8e6;
+    border: 1px solid #f0dfae;
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    margin-bottom: 18px;
+    display: none;
+  }
+  .banner.show { display: block; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Equity <span>Research</span> Report Generator</h1>
+  <p class="sub">Upload a company's financial document and download a formatted research note.</p>
+
+  <div class="banner" id="banner"></div>
+
+  <form id="form">
+    <label for="company">Company name</label>
+    <input type="text" id="company" name="company_name" placeholder="e.g. L&amp;T Technology Services" required>
+
+    <label for="file">Context document</label>
+    <label class="drop" id="drop" for="file">
+      <input type="file" id="file" name="file" required>
+      <div id="dropText">Click to choose a file, or drop one here</div>
+    </label>
+    <p class="hint" id="formats">PDF, CSV, TXT, MD, JSON or XLSX &mdash; up to 25 MB.</p>
+
+    <button type="submit" id="submit">Generate report</button>
+    <p class="hint" id="backend"></p>
+  </form>
+
+  <div class="status" id="status"></div>
+</main>
+
+<script>
+const form = document.getElementById('form');
+const fileInput = document.getElementById('file');
+const drop = document.getElementById('drop');
+const dropText = document.getElementById('dropText');
+const status = document.getElementById('status');
+const submit = document.getElementById('submit');
+const banner = document.getElementById('banner');
+
+fetch('/api/health').then(r => r.json()).then(h => {
+  document.getElementById('formats').textContent =
+    h.supported_formats.join(', ').toUpperCase().replaceAll('.', '') + ' — up to 25 MB.';
+  if (!h.llm_configured) {
+    banner.textContent = 'No LLM API key is set, so the app is running in offline mode: '
+      + 'reports will render with the full layout but every financial field left blank. '
+      + 'Add GEMINI_API_KEY to .env and restart for real extraction.';
+    banner.classList.add('show');
+  } else {
+    document.getElementById('backend').textContent = 'Extraction backend: ' + h.llm_backend;
+  }
+}).catch(() => {});
+
+function showFile() {
+  dropText.innerHTML = fileInput.files.length
+    ? '<span class="name">' + fileInput.files[0].name + '</span>'
+    : 'Click to choose a file, or drop one here';
+}
+fileInput.addEventListener('change', showFile);
+
+['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.classList.add('over');
+}));
+['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.classList.remove('over');
+}));
+drop.addEventListener('drop', ev => {
+  if (ev.dataTransfer.files.length) { fileInput.files = ev.dataTransfer.files; showFile(); }
+});
+
+function setStatus(kind, html) {
+  status.className = 'status show ' + kind;
+  status.innerHTML = html;
+}
+
+form.addEventListener('submit', async ev => {
+  ev.preventDefault();
+  submit.disabled = true;
+  setStatus('work', '<span class="spin"></span>Extracting financials and building the PDF — this can take a minute or two on a long filing.');
+
+  try {
+    const res = await fetch('/api/generate', { method: 'POST', body: new FormData(form) });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.detail || 'Generation failed.');
+
+    const note = body.used_llm
+      ? 'Extracted ' + body.chars_extracted.toLocaleString() + ' characters of source text.'
+      : '<strong>Offline mode:</strong> layout only, financial fields left blank.';
+    setStatus('ok',
+      '<div><strong>' + (body.company_name || 'Report') + '</strong>'
+      + (body.rating ? ' — rating: <strong>' + body.rating + '</strong>' : '') + '</div>'
+      + '<div style="color:#6b7280;margin-top:4px">' + note + '</div>'
+      + '<a href="' + body.download_url + '" download>Download PDF</a>');
+  } catch (err) {
+    setStatus('err', '<strong>Something went wrong.</strong><br>' + err.message);
+  } finally {
+    submit.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

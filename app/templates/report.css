@@ -1,0 +1,489 @@
+/* Print stylesheet for the research note.
+   Page geometry is A4 with zero page margin -- each .page paints its own
+   padding, footer band and edge tab, which is what lets the teal footer bleed
+   to the paper edge. */
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+:root {
+  --teal: #07867a;
+  --teal-dark: #066b61;
+  --bar: #00bcb8;
+  --zebra: #f1f2f1;
+  --rule: #cfd4d3;
+  --ink: #1a1a1a;
+  --muted: #6b7280;
+  --up: #00a651;
+  --down: #ed7d31;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 7.4pt;
+  line-height: 1.35;
+  color: var(--ink);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  padding: 11mm 12mm 14mm 12mm;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+}
+.page:last-of-type {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* ---------- page furniture ---------- */
+
+.pagefoot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 9mm;
+  background: var(--teal);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8pt;
+}
+
+/* Vertical "Q2FY26 Result Update" tab down the right edge of page 1. */
+.tab {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8mm;
+  height: 78mm;
+  background: var(--teal);
+  color: #fff;
+  font-size: 7.5pt;
+  font-weight: 600;
+  writing-mode: vertical-rl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.2px;
+}
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-right: 10mm;
+}
+.masthead-left {
+  color: var(--teal);
+  font-size: 15pt;
+  font-weight: 700;
+  margin-top: 6mm;
+}
+.masthead-right {
+  text-align: right;
+}
+
+.logo {
+  color: var(--teal);
+  font-size: 15pt;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.logo-tag {
+  color: var(--muted);
+  font-size: 5.6pt;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+.logo.sm {
+  font-size: 11pt;
+}
+
+/* Pages 2-4 carry a teal band with the mark, as in the reference. */
+.runhead {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14mm;
+  background: var(--teal);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12mm;
+}
+.runhead .logo {
+  color: #fff;
+}
+.page:not(:first-of-type) {
+  padding-top: 20mm;
+}
+
+/* ---------- page 1 header ---------- */
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 10mm;
+  margin-top: 1mm;
+}
+.title-row h1 {
+  margin: 0;
+  font-size: 20pt;
+  font-weight: 700;
+}
+.rating-badge {
+  min-width: 44mm;
+  text-align: center;
+  font-size: 15pt;
+  font-weight: 700;
+  padding: 1.6mm 4mm;
+  border: 0.6pt solid var(--rule);
+  box-shadow: 1.2pt 1.2pt 0 rgba(0, 0, 0, 0.18);
+  background: #fff;
+}
+.rating-badge.muted {
+  color: var(--muted);
+  font-size: 11pt;
+}
+
+.sector-row {
+  display: flex;
+  justify-content: space-between;
+  padding-right: 10mm;
+  margin: 2mm 0 1.5mm;
+  border-bottom: 0.6pt solid var(--rule);
+  padding-bottom: 1.2mm;
+}
+
+.strip-row {
+  display: flex;
+  gap: 2mm;
+  padding-right: 10mm;
+}
+.strip-left {
+  flex: 1 1 auto;
+}
+.strip-right {
+  flex: 0 0 46mm;
+}
+
+table.strip,
+table.pricebox {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 7pt;
+}
+table.strip th,
+table.strip td {
+  border: 0.4pt solid #fff;
+  padding: 0.9mm 1.5mm;
+  text-align: center;
+  background: var(--zebra);
+}
+table.strip .strip-title {
+  font-weight: 700;
+  width: 22mm;
+}
+table.strip .ch {
+  font-weight: 600;
+}
+table.strip .ids-head th {
+  font-weight: 600;
+}
+table.strip .ids td {
+  background: #fff;
+}
+
+table.pricebox th,
+table.pricebox td {
+  border: 0.4pt solid #fff;
+  padding: 1.1mm 2mm;
+  background: var(--zebra);
+  font-size: 9pt;
+  font-weight: 700;
+}
+table.pricebox th {
+  text-align: left;
+  width: 45%;
+}
+table.pricebox td {
+  text-align: right;
+}
+table.pricebox .ret td {
+  color: var(--teal);
+}
+
+.asof {
+  font-weight: 700;
+  font-size: 6.6pt;
+  margin: 1.2mm 0 1.5mm;
+  border-bottom: 0.8pt solid var(--ink);
+  padding-bottom: 0.6mm;
+  padding-right: 10mm;
+}
+
+/* ---------- two-column body ---------- */
+
+.cols {
+  display: flex;
+  gap: 4mm;
+  padding-right: 10mm;
+}
+.rail {
+  flex: 0 0 68mm;
+}
+.body {
+  flex: 1 1 auto;
+}
+
+.headline {
+  color: var(--teal);
+  font-size: 12pt;
+  font-weight: 700;
+  margin: 0 0 1.8mm;
+}
+.blurb {
+  font-weight: 700;
+  text-align: justify;
+  margin: 0 0 2mm;
+}
+.para {
+  text-align: justify;
+  margin: 0 0 2.5mm;
+}
+ul.bullets {
+  margin: 0 0 2.5mm;
+  padding-left: 4mm;
+}
+ul.bullets li {
+  margin-bottom: 1.1mm;
+  text-align: justify;
+}
+
+h3.teal {
+  color: var(--teal);
+  font-size: 10pt;
+  font-weight: 700;
+  margin: 2.5mm 0 1.5mm;
+}
+h3.teal.big {
+  font-size: 12.5pt;
+}
+h4 {
+  font-size: 8.5pt;
+  font-weight: 700;
+  margin: 0 0 1.2mm;
+}
+
+/* ---------- tables ---------- */
+
+table.fin {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 6.9pt;
+  margin-bottom: 2.5mm;
+}
+table.fin th,
+table.fin td {
+  padding: 0.85mm 1.4mm;
+  border: 0.3pt solid #fff;
+}
+table.fin tr.head th,
+table.fin tr.group th {
+  background: var(--teal);
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+table.fin tr.group th {
+  background: var(--teal-dark);
+}
+table.fin tr.head th.corner {
+  text-align: left;
+}
+table.fin td.label {
+  text-align: left;
+  background: var(--zebra);
+}
+table.fin td.label.indent {
+  padding-left: 3.5mm;
+}
+table.fin td.num {
+  text-align: right;
+  background: var(--zebra);
+  white-space: nowrap;
+}
+table.fin tr:nth-child(even) td {
+  background: #fafbfa;
+}
+table.fin tr.b td,
+table.fin td.b {
+  font-weight: 700;
+}
+table.fin tr.i td {
+  font-style: italic;
+}
+table.fin tr.section td {
+  background: #e2e6e5;
+  font-weight: 700;
+}
+table.fin.tight th,
+table.fin.tight td {
+  padding: 0.62mm 1.2mm;
+  font-size: 6.5pt;
+}
+/* Last resort for a very long quarterly P&L on the fixed-height page 1. */
+table.fin.xtight th,
+table.fin.xtight td {
+  padding: 0.32mm 1mm;
+  font-size: 5.9pt;
+}
+table.fin.quarterly td.num,
+table.fin.wide td.num {
+  text-align: center;
+}
+table.kv td.label {
+  width: 62%;
+}
+
+/* The left rail carries five stacked blocks in a fixed-height page, so it runs
+   tighter than the main column to keep the last table on the page. */
+.rail table.fin {
+  margin-bottom: 1.6mm;
+}
+.rail table.fin th,
+.rail table.fin td {
+  padding: 0.5mm 1.2mm;
+  font-size: 6.4pt;
+}
+
+.missing {
+  color: var(--muted);
+}
+.missing-block {
+  color: var(--muted);
+  font-style: italic;
+}
+.note {
+  font-size: 5.8pt;
+  font-weight: 700;
+  margin: -1mm 0 0.6mm;
+}
+
+/* ---------- charts ---------- */
+
+.chart {
+  width: 100%;
+  display: block;
+}
+.chart.price {
+  margin-bottom: 2mm;
+}
+.chartgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm 6mm;
+  margin: 2mm 0 3mm;
+}
+.chartgrid figure {
+  margin: 0;
+}
+.chartgrid figcaption {
+  font-size: 10pt;
+  font-weight: 700;
+  margin-bottom: 1mm;
+}
+.highlights {
+  background: var(--zebra);
+  padding: 2mm 2mm 0.5mm;
+  margin-bottom: 2.5mm;
+}
+
+/* ---------- page 3 grid ---------- */
+
+.fingrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm 6mm;
+}
+
+/* ---------- page 4 ---------- */
+
+.reco {
+  display: flex;
+  gap: 4mm;
+  margin-bottom: 2mm;
+}
+.reco-chart {
+  flex: 1 1 auto;
+}
+.reco-table {
+  flex: 0 0 58mm;
+}
+table.criteria td.num {
+  text-align: center;
+}
+.tri {
+  font-size: 7pt;
+  vertical-align: middle;
+}
+.tri.up {
+  color: var(--up);
+}
+.tri.down {
+  color: var(--down);
+}
+.tri.flat {
+  color: #f5b301;
+}
+.defs {
+  font-size: 6.2pt;
+  margin: 2mm 0;
+}
+.defs p {
+  margin: 0 0 1mm;
+  text-align: justify;
+}
+.u {
+  text-decoration: underline;
+  font-weight: 700;
+}
+.disc-head {
+  color: var(--teal);
+  font-size: 8pt;
+  margin-top: 2mm;
+}
+.disclaimer {
+  font-size: 5.9pt;
+  color: #333;
+}
+.disclaimer p {
+  margin: 0 0 1.1mm;
+  text-align: justify;
+}
+.disclaimer .prov {
+  color: var(--muted);
+  font-style: italic;
+}

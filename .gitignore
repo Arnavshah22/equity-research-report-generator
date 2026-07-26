@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Generated reports are scratch, except the three committed examples the
+# submission asks for.
+output/*
+!output/LTTS_Q2FY26.pdf
+!output/JSW_Energy_Q2FY26.pdf
+!output/ICICI_Q2FY26.pdf

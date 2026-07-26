@@ -1,0 +1,16 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+jinja2>=3.1
+pydantic>=2.7
+python-dotenv>=1.0
+
+# LLM backends -- you only need the one you use; see app/providers.py.
+google-genai>=1.0        # Gemini (free tier)
+openai>=1.99             # OpenAI, Groq, OpenRouter, Ollama
+anthropic>=0.69          # Claude
+
+pdfplumber>=0.11
+openpyxl>=3.1
+matplotlib>=3.8
+playwright>=1.44

@@ -1,0 +1,285 @@
+{#
+  The report template. Layout, section order and typography mirror the
+  reference note; every value comes from `report` (see app/schema.py) and
+  every brand string comes from `brand` (see app/branding.py).
+
+  `m()` renders a possibly-missing value: nulls become an en dash, which is
+  the house convention for "not disclosed".
+#}
+{%- macro m(value) -%}
+{%- if value is none or value == "" -%}<span class="missing">&ndash;</span>{%- else -%}{{ value }}{%- endif -%}
+{%- endmacro -%}
+
+{%- macro arrow(direction) -%}
+{%- if direction == "up" -%}<span class="tri up">&#9650;</span>
+{%- elif direction == "down" -%}<span class="tri down">&#9660;</span>
+{%- else -%}<span class="tri flat">&#9679;</span>{%- endif -%}
+{%- endmacro -%}
+
+{#- One renderer for every tabular block in the report. -#}
+{%- macro table(t, klass="") -%}
+{%- if t and t.rows -%}
+<table class="fin {{ klass }}">
+  {%- if t.group_header -%}
+  <tr class="group">
+    <th></th>
+    {%- for g in t.group_header -%}<th colspan="{{ g.span }}">{{ g.label }}</th>{%- endfor -%}
+  </tr>
+  {%- endif -%}
+  {%- if t.columns -%}
+  <tr class="head">
+    <th class="corner">{{ t.corner or "" }}</th>
+    {%- for c in t.columns -%}<th>{{ c }}</th>{%- endfor -%}
+  </tr>
+  {%- endif -%}
+  {%- for row in t.rows -%}
+  <tr class="{% if row.section %}section{% endif %}{% if row.bold %} b{% endif %}{% if row.italic %} i{% endif %}">
+    <td class="label{% if row.indent %} indent{% endif %}">{{ row.label }}</td>
+    {%- if row.section -%}
+      <td colspan="{{ t.columns|length or 1 }}"></td>
+    {%- else -%}
+      {%- for i in range(t.columns|length or row.values|length) -%}
+      <td class="num">{{ m(row.values[i] if i < row.values|length else none) }}</td>
+      {%- endfor -%}
+    {%- endif -%}
+  </tr>
+  {%- endfor -%}
+</table>
+{%- endif -%}
+{%- endmacro -%}
+
+<link rel="stylesheet" href="report.css">
+
+<!-- ==================== PAGE 1 ==================== -->
+<section class="page">
+  <div class="tab">{{ report.header.period or "" }} {{ report.header.report_kind }}</div>
+
+  <header class="masthead">
+    <div class="masthead-left">{{ brand.research_line }}</div>
+    <div class="masthead-right">
+      <div class="logo">{{ brand.name }}</div>
+      <div class="logo-tag">{{ brand.tagline }}</div>
+    </div>
+  </header>
+
+  <div class="title-row">
+    <h1>{{ m(report.header.company_name) }}</h1>
+    {% if report.header.rating %}
+    <div class="rating-badge">{{ report.header.rating.value }}</div>
+    {% else %}
+    <div class="rating-badge muted">NOT RATED</div>
+    {% endif %}
+  </div>
+
+  <div class="sector-row">
+    <div>Sector:&nbsp; {{ m(report.header.sector) }}</div>
+    <div>{{ m(report.header.date) }}</div>
+  </div>
+
+  <div class="strip-row">
+    <div class="strip-left">
+      {# Six columns: the Key Changes strip sits above the identity codes,
+         matching the reference's single merged block. #}
+      <table class="strip">
+        <tr class="changes">
+          <th class="strip-title">Key Changes</th>
+          <td class="ch" colspan="2">Target {{ arrow(report.key_changes.target) }}</td>
+          <td class="ch" colspan="2">Rating {{ arrow(report.key_changes.rating) }}</td>
+          <td class="ch">Earnings {{ arrow(report.key_changes.earnings) }}</td>
+        </tr>
+        <tr class="ids-head">
+          <th>Stock Type</th>
+          <th>Bloomberg Code</th>
+          <th>{{ report.identity.index_name }}</th>
+          <th>NSE Code</th>
+          <th>BSE Code</th>
+          <th>Time Frame</th>
+        </tr>
+        <tr class="ids">
+          <td>{{ m(report.identity.stock_type) }}</td>
+          <td>{{ m(report.identity.bloomberg_code) }}</td>
+          <td>{{ m(report.identity.index_value) }}</td>
+          <td>{{ m(report.identity.nse_code) }}</td>
+          <td>{{ m(report.identity.bse_code) }}</td>
+          <td>{{ m(report.identity.time_frame) }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="strip-right">
+      <table class="pricebox">
+        <tr><th>Target</th><td>{{ m(report.header.target_price) }}</td></tr>
+        <tr><th>CMP</th><td>{{ m(report.header.cmp) }}</td></tr>
+        <tr class="ret"><th>Return</th><td>{{ m(report.header.expected_return) }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="asof">Data as of:&nbsp; {{ m(report.header.data_as_of) }}</div>
+
+  <div class="cols">
+    <!-- left rail -->
+    <aside class="rail">
+      {% if report.company_data %}
+      <table class="fin kv">
+        <tr class="head"><th class="corner" colspan="2">Company Data</th></tr>
+        {% for item in report.company_data %}
+        <tr><td class="label">{{ item.label }}</td><td class="num">{{ m(item.value) }}</td></tr>
+        {% endfor %}
+      </table>
+      {% endif %}
+
+      {{ table(report.shareholding, "tight") }}
+      {{ table(report.price_performance, "tight") }}
+
+      {% if charts.price %}
+      <div class="note">*over or under performance to benchmark index</div>
+      <img class="chart price" src="{{ charts.price }}" alt="Price performance versus index">
+      {% endif %}
+
+      {{ table(report.estimates_summary, "tight") }}
+    </aside>
+
+    <!-- main column -->
+    <main class="body">
+      <h2 class="headline">{{ m(report.narrative.headline) }}</h2>
+      {% if report.narrative.company_blurb %}
+      <p class="blurb">{{ report.narrative.company_blurb }}</p>
+      {% endif %}
+      {% if report.narrative.result_bullets %}
+      <ul class="bullets">
+        {% for b in report.narrative.result_bullets %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      <h3 class="teal">Outlook &amp; Valuation</h3>
+      <p class="para">{{ m(report.narrative.outlook_valuation) }}</p>
+
+      {% if report.quarterly and report.quarterly.rows %}
+      <h3 class="teal">Quarterly Financials</h3>
+      {# Page 1 is a fixed-height A4 sheet with `overflow: hidden`, so a long
+         P&L would silently lose its last rows off the bottom edge. Step the
+         density down as the row count grows rather than clipping. #}
+      {{ table(report.quarterly, "quarterly" ~ (" tight" if report.quarterly.rows | length > 14 else "")
+                                            ~ (" xtight" if report.quarterly.rows | length > 18 else "")) }}
+      {% endif %}
+    </main>
+  </div>
+
+  <footer class="pagefoot"><span>{{ brand.website }}</span></footer>
+</section>
+
+<!-- ==================== PAGE 2 ==================== -->
+<section class="page">
+  <header class="runhead"><div class="logo sm">{{ brand.name }}</div></header>
+
+  {% if report.narrative.key_highlights %}
+  <h3 class="teal">Key highlights</h3>
+  <div class="highlights">
+    <ul class="bullets">
+      {% for h in report.narrative.key_highlights %}<li>{{ h }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if charts.combos %}
+  <div class="chartgrid">
+    {% for c in charts.combos %}
+    <figure>
+      <figcaption class="teal">{{ c.title }}</figcaption>
+      <img class="chart" src="{{ c.uri }}" alt="{{ c.title }} chart">
+    </figure>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="para missing-block">No time-series data suitable for charting was found in the source document.</p>
+  {% endif %}
+
+  {% if report.change_in_estimates and report.change_in_estimates.rows %}
+  <h3 class="teal">Change in Estimates</h3>
+  {{ table(report.change_in_estimates, "wide") }}
+  {% endif %}
+
+  <footer class="pagefoot"><span>{{ brand.website }}</span></footer>
+</section>
+
+<!-- ==================== PAGE 3 ==================== -->
+<section class="page">
+  <header class="runhead"><div class="logo sm">{{ brand.name }}</div></header>
+
+  <h3 class="teal big">Consolidated Financials</h3>
+
+  <div class="fingrid">
+    <div>
+      <h4>Profit &amp; Loss</h4>
+      {{ table(report.profit_loss, "tight") }}
+    </div>
+    <div>
+      <h4>Balance Sheet</h4>
+      {{ table(report.balance_sheet, "tight") }}
+    </div>
+    <div>
+      <h4>Cashflow</h4>
+      {{ table(report.cashflow, "tight") }}
+    </div>
+    <div>
+      <h4>Ratios</h4>
+      {{ table(report.ratios, "tight") }}
+    </div>
+  </div>
+
+  <footer class="pagefoot"><span>{{ brand.website }}</span></footer>
+</section>
+
+<!-- ==================== PAGE 4 ==================== -->
+<section class="page">
+  <header class="runhead"><div class="logo sm">{{ brand.name }}</div></header>
+
+  <h3 class="teal">Recommendation Summary</h3>
+  <div class="reco">
+    <div class="reco-chart">
+      {% if charts.price %}
+      <img class="chart" src="{{ charts.price }}" alt="Price history">
+      {% else %}
+      <p class="para missing-block">No price history available.</p>
+      {% endif %}
+    </div>
+    <div class="reco-table">
+      <table class="fin">
+        <tr class="head"><th class="corner">Dates</th><th>Rating</th><th>Target</th></tr>
+        {% if report.rating_history %}
+          {% for r in report.rating_history %}
+          <tr><td class="label">{{ m(r.date) }}</td><td class="num">{{ m(r.rating) }}</td><td class="num">{{ m(r.target) }}</td></tr>
+          {% endfor %}
+        {% else %}
+          <tr><td class="label" colspan="3"><span class="missing">No prior recommendation history</span></td></tr>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+  <h3 class="teal">Investment Rating Criteria</h3>
+  <table class="fin criteria">
+    <tr class="head"><th class="corner">Ratings</th><th>Large caps</th><th>Midcaps</th><th>Small Caps</th></tr>
+    {% for row in brand.rating_criteria %}
+    <tr><td class="label b">{{ row[0] }}</td><td class="num">{{ row[1] }}</td><td class="num">{{ row[2] }}</td><td class="num">{{ row[3] }}</td></tr>
+    {% endfor %}
+  </table>
+
+  <div class="defs">
+    <p><span class="u">Definitions:</span> {{ brand.rating_definitions }}</p>
+    <p><span class="u">Symbols:</span>
+      <span class="tri up">&#9650;</span> Upgrade
+      <span class="tri flat">&#9679;</span> No Change
+      <span class="tri down">&#9660;</span> Downgrade
+    </p>
+    <p>{{ brand.horizon_note }}</p>
+  </div>
+
+  <h4 class="disc-head">DISCLAIMER</h4>
+  <div class="disclaimer">
+    {% for para in brand.disclaimer %}<p>{{ para }}</p>{% endfor %}
+    {% if report.source_note %}<p class="prov">{{ report.source_note }}.</p>{% endif %}
+  </div>
+
+  <footer class="pagefoot"><span>{{ brand.website }}</span></footer>
+</section>
