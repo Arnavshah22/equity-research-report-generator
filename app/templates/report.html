@@ -48,6 +48,20 @@
 {%- endif -%}
 {%- endmacro -%}
 
+{#- A titled section. `table()` renders nothing when it has no rows, so a
+    heading printed unconditionally above it leaves a title stranded over blank
+    paper -- which reads as a broken template rather than as absent data. Say
+    what happened instead. Banks, for one, publish no cashflow statement in a
+    quarterly release, and that is a fact about the source, not a failure. -#}
+{%- macro block(title, t, klass="") -%}
+<h4>{{ title }}</h4>
+{%- if t and t.rows -%}
+{{ table(t, klass) }}
+{%- else -%}
+<p class="missing-block">Not disclosed in the source document.</p>
+{%- endif -%}
+{%- endmacro -%}
+
 <link rel="stylesheet" href="report.css">
 
 <!-- ==================== PAGE 1 ==================== -->
@@ -209,22 +223,11 @@
   <h3 class="teal big">Consolidated Financials</h3>
 
   <div class="fingrid">
-    <div>
-      <h4>Profit &amp; Loss</h4>
-      {{ table(report.profit_loss, "tight") }}
-    </div>
-    <div>
-      <h4>Balance Sheet</h4>
-      {{ table(report.balance_sheet, "tight") }}
-    </div>
-    <div>
-      <h4>Cashflow</h4>
-      {{ table(report.cashflow, "tight") }}
-    </div>
-    <div>
-      <h4>Ratios</h4>
-      {{ table(report.ratios, "tight") }}
-    </div>
+    {# Autoescaping is on, so pass a literal ampersand -- Jinja emits the entity. #}
+    <div>{{ block("Profit & Loss", report.profit_loss, "tight") }}</div>
+    <div>{{ block("Balance Sheet", report.balance_sheet, "tight") }}</div>
+    <div>{{ block("Cashflow", report.cashflow, "tight") }}</div>
+    <div>{{ block("Ratios", report.ratios, "tight") }}</div>
   </div>
 
   <footer class="pagefoot"><span>{{ brand.website }}</span></footer>

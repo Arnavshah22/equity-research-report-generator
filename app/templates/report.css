@@ -385,6 +385,10 @@ table.kv td.label {
 .missing-block {
   color: var(--muted);
   font-style: italic;
+  margin: 0 0 2.5mm;
+  padding: 1.6mm 2mm;
+  background: var(--zebra);
+  font-size: 6.6pt;
 }
 .note {
   font-size: 5.8pt;
